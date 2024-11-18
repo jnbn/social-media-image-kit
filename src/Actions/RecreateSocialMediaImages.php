@@ -2,15 +2,13 @@
 
 namespace Stillat\SocialMediaImageKit\Actions;
 
-use Statamic\Entries\Entry;
-
 use Statamic\Actions\Action;
+use Statamic\Entries\Entry;
 use Stillat\SocialMediaImageKit\Configuration;
 use Stillat\SocialMediaImageKit\Jobs\GenerateSocialMediaImages;
 
 class RecreateSocialMediaImages extends Action
 {
-
     protected $confirm = false;
 
     public static function title()
@@ -18,23 +16,31 @@ class RecreateSocialMediaImages extends Action
         return 'Re-create Social Media Images';
     }
 
+    /**
+     * Determine if an item's collection is valid for this action.
+     *
+     * @param Entry $item
+     * @return bool
+     */
+    private function isValidCollection(Entry $item): bool
+    {
+        $collection = $item->collection()?->handle();
+        return $collection !== null && in_array($collection, Configuration::collections(), true);
+    }
+
     public function visibleTo($item)
     {
-        if (! $item instanceof Entry) {
-            return false;
-        }
-
-        $collection = $item->collection()?->handle();
-
-        if ($collection === null || ! in_array($collection, Configuration::collections())) {
-            return false;
-        }
-
-        return true;
+        return $item instanceof Entry && $this->isValidCollection($item);
     }
 
     public function visibleToBulk($items)
     {
+        foreach ($items as $item) {
+            if ($item instanceof Entry && $this->isValidCollection($item)) {
+                return true;
+            }
+        }
+
         return false;
     }
 
